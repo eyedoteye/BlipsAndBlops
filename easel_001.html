@@ -15,7 +15,7 @@
     <script>
       function scale(minInput, maxInput, curInput, minOutput, maxOutput)
       {
-        var t = curInput/(maxInput - minInput);
+        var t = curInput != 0 ? curInput/(maxInput - minInput) : 0;
         t = t < 0 ? 0 : t;
         t = t > 1 ? 1 : t;
         t = t * (maxOutput - minOutput) + minOutput;
@@ -45,6 +45,23 @@
 
         var background = new createjs.Shape();
         background.x = background.y = 0;
+        
+        var createNote = (halfSteps, frequencyMax, pianoWidth) => {
+          let octaveMin = 0;
+          let octaveMax = 8;
+
+          // Based of forumla: f_n = f_0 * (a)^n; where a = 2^(1/12); where f_0 = 440 [A_4 = 440Hz]
+          let f_0 = 440;
+          let a = Math.pow(2, 1/12);
+          let halfStepsFromC0ToA4 = 12 * 4 + 8;
+
+          let note = {};
+          note.frequency = f_0 * Math.pow(a, halfSteps - halfStepsFromC0ToA4);
+          note.position = scale(0, frequencyMax,
+                                note.frequency,
+                                0, pianoWidth); 
+          return note;
+        };
 
         var subStart = scale(0, freqMax, 20, 0, canvas.width);
         var bassStart = scale(0, freqMax, 50, 0, canvas.width);
@@ -61,6 +78,15 @@
                              .drawRect(bassStart, 0, mudinessStart, canvas.height).endFill()
                            .beginLinearGradientFill(["gold", "yellow"], [0,1], mudinessStart, 0, humanStart, 0)
                              .drawRect(mudinessStart, 0, humanStart, canvas.height).endFill();
+        let C0 = createNote(0, canvas.width);
+
+        for(let i = 0; i < 12 * 8; i++)
+        {
+          let note = createNote(i, freqMax, canvas.width);
+          background.graphics.beginStroke("white")
+                               .moveTo(note.position, 0).lineTo(note.position, canvas.height)
+                               .endStroke();
+        }
 
         stage.addChild(background);
 
@@ -69,7 +95,6 @@
         circle.x = 0;
         circle.y = canvas.height / 2;
         stage.addChild(circle); 
-
 
         circle.on("pressmove", function(e) {
           e.target.x = e.stageX;
