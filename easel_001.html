@@ -53,9 +53,14 @@
         var harmonicStart = scale(0, freqMax, 6000, 0, canvas.width);
         var hissStart = scale(0, freqMax, 8000, 0, canvas.width);
 
-        background.graphics.beginFill("purple").drawRect(subStart, 0, bassStart, canvas.height).endFill()
-                           .beginFill("orange").drawRect(bassStart, 0, mudinessStart, canvas.height).endFill()
-                           .beginFill("gold").drawRect(mudinessStart, 0, humanStart, canvas.height).endFill();
+        background.graphics.beginLinearGradientFill(["black", "purple"], [.9,1], 0, 0, subStart, 0)
+                             .drawRect(0, 0, subStart+1, canvas.height).endFill()
+                           .beginLinearGradientFill(["purple", "orange"], [0,1], subStart, 0, bassStart, 0)
+                             .drawRect(subStart, 0, bassStart, canvas.height).endFill()
+                           .beginLinearGradientFill(["orange", "gold"], [0,1], bassStart, 0, mudinessStart, 0)
+                             .drawRect(bassStart, 0, mudinessStart, canvas.height).endFill()
+                           .beginLinearGradientFill(["gold", "yellow"], [0,1], mudinessStart, 0, humanStart, 0)
+                             .drawRect(mudinessStart, 0, humanStart, canvas.height).endFill();
 
         stage.addChild(background);
 
@@ -69,7 +74,7 @@
         circle.on("pressmove", function(e) {
           e.target.x = e.stageX;
           e.target.y = e.stageY;
-          osc.frequency.value = scale(0, canvas.width, e.stageX, 0, freqMax);
+          osc.frequency.value = scale(subStart, canvas.width, e.stageX, 0, freqMax);
           osc.volume.value = scale(0, canvas.height, e.stageY, 0, -40);
           stage.update();
         });
