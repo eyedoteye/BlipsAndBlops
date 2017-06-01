@@ -2,39 +2,91 @@
 <html>
   <head>
     <meta charset=utf-8>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
     <title>EaselJS Experiment#001</title>
     <style>
-      body { margin: 0; background-color: black; }
-      canvas { width: 100%; height: 100%; display: block; }
+      body { margin: 0; background: black }
+      canvas { width: 100%; height: 100%; position: absolute }
     </style>
     <script src="https://code.createjs.com/easeljs-0.8.2.min.js"></script>
-    <script src="https://code.createjs.com/tweenjs-0.6.2.min.js"></script>
+    <script src="Tone.js"></script>
   </head>
   <body onload="init();">
-    <canvas id="ThebestCanvas" width=1280 height=720 ></canvas>
     <script>
+      function scale(minInput, maxInput, curInput, minOutput, maxOutput)
+      {
+        var t = curInput/(maxInput - minInput);
+        t = t < 0 ? 0 : t;
+        t = t > 1 ? 1 : t;
+        t = t * (maxOutput - minOutput) + minOutput;
+        return t;
+      }
+
+      function distance(x1, y1, x2, y2)
+      {
+        var xDiff = x2 - x1;
+        var yDiff = y2 - y1;
+        return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+      }
+      
       function init()
       {
-        var Canvas = document.get
+        var osc = new Tone.Oscillator(0, "sine").toMaster().start();
+        var freqMax = 600;
 
-        var stage = new createjs.Stage("ThebestCanvas");
+        var canvas = document.createElement('canvas');
+        canvas.id = "ThebestCanvas";
+        canvas.width = 1280;
+        canvas.height = 720;
+        document.body.appendChild(canvas);
+
+        var stage = new createjs.Stage(canvas);
+        createjs.Touch.enable(stage);
+
+        var background = new createjs.Shape();
+        background.x = background.y = 0;
+
+        var subStart = scale(0, freqMax, 20, 0, canvas.width);
+        var bassStart = scale(0, freqMax, 50, 0, canvas.width);
+        var mudinessStart = scale(0, freqMax, 250, 0, canvas.width);
+        var humanStart = scale(0, freqMax, 800, 0, canvas.width);
+        var harmonicStart = scale(0, freqMax, 6000, 0, canvas.width);
+        var hissStart = scale(0, freqMax, 8000, 0, canvas.width);
+
+        background.graphics.beginFill("purple").drawRect(subStart, 0, bassStart, canvas.height).endFill()
+                           .beginFill("orange").drawRect(bassStart, 0, mudinessStart, canvas.height).endFill()
+                           .beginFill("gold").drawRect(mudinessStart, 0, humanStart, canvas.height).endFill();
+
+        stage.addChild(background);
+
         var circle = new createjs.Shape();
-        circle.graphics.beginFill("DeepSkyBlue").drawCircle(0, 0, 50);
+        circle.graphics.beginFill("DeepSkyBlue").drawCircle(0, 0, 70);
         circle.x = 0;
-        circle.y = 300;
+        circle.y = canvas.height / 2;
         stage.addChild(circle); 
-        stage.update();
 
-        createjs.Tween.get(circle, { loop: true })
-                      .to({ x: 1280 }, 1000, createjs.Ease.getPowInOut(3))
-                      .to({ x: 0 }, 1000, createjs.Ease.getPowInOut(3));
-        createjs.Tween.get(circle, { loop: true })
-                      .to({ alpha: 0}, 25000, createjs.Ease.linear())
-                      .to({ alpha: 1}, 2500, createjs.Ease.linear());
+
+        circle.on("pressmove", function(e) {
+          e.target.x = e.stageX;
+          e.target.y = e.stageY;
+          osc.frequency.value = scale(0, canvas.width, e.stageX, 0, freqMax);
+          osc.volume.value = scale(0, canvas.height, e.stageY, 0, -40);
+          stage.update();
+        });
+        
+        stage.mouseMoveOutside = true;
+        stage.on("stagemousemove", function(e) {
+          var localMouseCoords = circle.globalToLocal(e.rawX, e.rawY);
+          circle.alpha = scale(0, canvas.width * .85, distance(0,0,localMouseCoords.x, localMouseCoords.y), 1, 0);
+        });
+
+        function update(e)
+        { 
+          stage.update();
+        }
 
         createjs.Ticker.setFPS(60);
-        createjs.Ticker.addEventListener("tick", stage);
+        createjs.Ticker.addEventListener("tick", update);
       }
     </script>
   </body>
